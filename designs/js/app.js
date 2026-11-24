@@ -1,5 +1,6 @@
 const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
+const homeHeroMarkup = app.querySelector(".living-canvas").outerHTML;
 
 function toast(message) {
   toastEl.textContent = message;
@@ -32,27 +33,7 @@ function srcdoc(html, css, js) {
 
 function homeView() {
   return `
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">Website design library</p>
-        <h1>Every kind of page,<br /><span>sorted by type and motion.</span></h1>
-        <p class="lede">Pick a mood (formal, informal, branding), a website type, then a look — 2D, 3D, animated, or unique. Simple designs let anyone copy the code. Intermediate and advanced source stays behind login.</p>
-        <div class="hero-actions">
-          <a class="cta" href="#/types">Browse types</a>
-          <a class="cta ghost" href="#/designs?level=simple">Free simple code</a>
-        </div>
-      </div>
-      <div class="hero-3d">
-        <div class="cube">
-          <div class="face front">Sign up</div>
-          <div class="face back">Join</div>
-          <div class="face right">Create</div>
-          <div class="face left">Start</div>
-          <div class="face top">New</div>
-          <div class="face bottom">User</div>
-        </div>
-      </div>
-    </section>
+    ${homeHeroMarkup}
     <section class="band">
       <article><strong id="statDesigns">—</strong><span>Page designs</span></article>
       <article><strong>6</strong><span>Website types</span></article>

@@ -4,6 +4,7 @@ const CREATIVE_NAVIGATION = [
   {
     label: "Explore",
     key: "designs",
+    spectrum: "explore",
     type: "menu",
     items: [
       { label: "Discover All", href: "#/designs" },
@@ -20,10 +21,12 @@ const CREATIVE_NAVIGATION = [
   {
     label: "Categories",
     key: "types",
+    spectrum: "categories",
     type: "mega",
     groups: [
       {
         label: "Web & UI Design",
+        spectrum: "web",
         items: [
           ["Website Design", "#/types"],
           ["Landing Pages", "#/designs?site=landing"],
@@ -37,6 +40,7 @@ const CREATIVE_NAVIGATION = [
       },
       {
         label: "App Design",
+        spectrum: "app",
         items: [
           ["Android Applications"],
           ["iOS Applications"],
@@ -49,6 +53,7 @@ const CREATIVE_NAVIGATION = [
       },
       {
         label: "Architecture",
+        spectrum: "architecture",
         items: [
           ["Modern Houses"],
           ["Luxury Villas"],
@@ -61,6 +66,7 @@ const CREATIVE_NAVIGATION = [
       },
       {
         label: "Interior & Home Decor",
+        spectrum: "interiors",
         items: [
           ["Living Rooms"],
           ["Bedrooms"],
@@ -74,6 +80,7 @@ const CREATIVE_NAVIGATION = [
       },
       {
         label: "3D & Digital Art",
+        spectrum: "digital-art",
         items: [
           ["3D Modelling"],
           ["3D Characters"],
@@ -85,6 +92,7 @@ const CREATIVE_NAVIGATION = [
       },
       {
         label: "Animation & Motion",
+        spectrum: "motion",
         items: [
           ["CSS Animations"],
           ["Website Interactions"],
@@ -96,6 +104,7 @@ const CREATIVE_NAVIGATION = [
       },
       {
         label: "Graphic Design",
+        spectrum: "graphic",
         items: [
           ["Logo Design"],
           ["Brand Identity"],
@@ -107,6 +116,7 @@ const CREATIVE_NAVIGATION = [
       },
       {
         label: "Colors & Inspiration",
+        spectrum: "inspiration",
         items: [
           ["Color Palettes"],
           ["Gradients"],
@@ -195,6 +205,7 @@ const navigation = (() => {
   const searchDialog = document.getElementById("navSearchDialog");
   let accountIdentity = null;
   let focusToggleAfterRoute = false;
+  let selectedDimension = null;
 
   function makeLink(item) {
     if (item.placeholder) {
@@ -211,7 +222,7 @@ const navigation = (() => {
         <div class="panel-heading"><span>THE CREATIVE INDEX</span><strong>Browse by discipline</strong></div>
         <div class="mega-groups">${item.groups
           .map(
-            (group) => `<section class="mega-group"><h2>${group.label}</h2><div class="mega-links">${group.items
+            (group) => `<section class="mega-group" data-spectrum="${group.spectrum}"><h2><button class="dimension-trigger" type="button" aria-label="Highlight ${group.label} accent" aria-pressed="false">${group.label}</button></h2><div class="mega-links">${group.items
               .map(([label, href]) => makeLink({ label, href, placeholder: !href }))
               .join("")}</div></section>`
           )
@@ -239,7 +250,7 @@ const navigation = (() => {
           .join("")}</div>
       </div>`;
     }
-    return `<div class="nav-section nav-${item.key}-section" data-nav-section>
+    return `<div class="nav-section nav-${item.key}-section" data-nav-section data-spectrum="${item.spectrum || item.key}">
       <button class="nav-trigger" type="button" data-nav="${item.key}" aria-expanded="false" aria-controls="${id}">${item.label}<span class="chevron" aria-hidden="true"></span></button>
       ${contents}
     </div>`;
@@ -251,7 +262,7 @@ const navigation = (() => {
     const items = user
       ? `<a href="#/account">My Profile</a><a href="#/account">My Dashboard</a><span class="nav-placeholder">My Projects<span>Coming soon</span></span><span class="nav-placeholder">My Collections<span>Coming soon</span></span><span class="nav-placeholder">Following<span>Coming soon</span></span><span class="nav-placeholder">Account Settings<span>Coming soon</span></span><span class="nav-placeholder">Help &amp; Support<span>Coming soon</span></span><button class="nav-menu-action" id="navLogout" type="button">Log out</button>`
       : `<a href="#/login">Login</a><a href="#/register">Register</a>`;
-    return `<div class="nav-section account-section" data-nav-section>
+    return `<div class="nav-section account-section" data-nav-section data-spectrum="account">
       <button class="nav-trigger account-trigger" type="button" aria-expanded="false" aria-controls="account-panel">${trigger}<span class="chevron" aria-hidden="true"></span></button>
       <div class="nav-panel account-panel" id="account-panel" hidden>${items}</div>
     </div>`;
@@ -265,7 +276,7 @@ const navigation = (() => {
     ).join("");
     nav.innerHTML = `<div class="nav-dock">
       ${mainLinks}
-      <div class="nav-section nav-showcase-section" data-nav-section>
+      <div class="nav-section nav-showcase-section" data-nav-section data-spectrum="showcase">
         <button class="showcase-button nav-trigger" type="button" aria-expanded="false" aria-controls="showcase-panel">
           <span>Showcase</span><span class="showcase-symbol" aria-hidden="true">+</span>
         </button>
@@ -281,11 +292,11 @@ const navigation = (() => {
     </div>
     <div class="nav-tools">
         <button class="icon-button" id="navSearchButton" type="button" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 4.2 4.2"></path></svg></button>
-        <div class="nav-section utility-section" data-nav-section>
+        <div class="nav-section utility-section" data-nav-section data-spectrum="community">
           <button class="icon-button nav-trigger" id="navNotificationsButton" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="notifications-panel" title="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></button>
           <div class="nav-panel utility-panel" id="notifications-panel" hidden><strong>Notifications</strong><p>Notifications will appear here when the community feed is connected.</p></div>
         </div>
-        <div class="nav-section utility-section saved-section" data-nav-section>
+        <div class="nav-section utility-section saved-section" data-nav-section data-spectrum="inspiration">
           <button class="icon-button nav-trigger" id="navSavedButton" type="button" aria-label="Saved designs" aria-expanded="false" aria-controls="saved-panel" title="Saved designs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.7c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10a4.7 4.7 0 0 1 8.8-2.2 4.7 4.7 0 0 1 8.8 2.2Z"></path></svg></button>
           <div class="nav-panel utility-panel" id="saved-panel" hidden><strong>Saved designs</strong><p>Saved designs will be available when collections are connected.</p></div>
         </div>
@@ -323,6 +334,8 @@ const navigation = (() => {
     if (accountTrigger) {
       accountTrigger.classList.toggle("active", ["account", "login", "register"].includes(route));
     }
+    const openSection = nav.querySelector("[data-nav-section].is-open");
+    setSpectrum(openSection?.dataset.spectrum || spectrumForRoute());
     const theme = document.documentElement.getAttribute("data-theme") || "dark";
     nav.querySelectorAll("[data-theme-set]").forEach((button) => {
       const selected = button.dataset.themeSet === theme;
@@ -331,11 +344,25 @@ const navigation = (() => {
     });
   }
 
+  function spectrumForRoute() {
+    const [path, query = ""] = (location.hash.slice(1) || "/").split("?");
+    if (path === "/types") return "categories";
+    if (path.startsWith("/designs")) {
+      return new URLSearchParams(query).has("site") ? "web" : "explore";
+    }
+    return "brand";
+  }
+
+  function setSpectrum(spectrum) {
+    nav.dataset.spectrum = spectrum;
+  }
+
   function setOpen(section, open) {
     const trigger = section.querySelector(".nav-trigger");
     const panel = section.querySelector(".nav-panel");
     if (!trigger || !panel) return;
     if (open) {
+      clearSelectedDimension();
       nav.querySelectorAll("[data-nav-section].is-open").forEach((other) => {
         if (other !== section) setOpen(other, false);
       });
@@ -343,6 +370,28 @@ const navigation = (() => {
     section.classList.toggle("is-open", open);
     trigger.setAttribute("aria-expanded", String(open));
     panel.hidden = !open;
+    if (open) setSpectrum(section.dataset.spectrum || "brand");
+    else if (!nav.querySelector("[data-nav-section].is-open")) {
+      clearSelectedDimension();
+      setSpectrum(spectrumForRoute());
+    }
+  }
+
+  function clearSelectedDimension() {
+    selectedDimension = null;
+    nav.querySelectorAll(".dimension-trigger[aria-pressed='true']").forEach((button) => {
+      button.setAttribute("aria-pressed", "false");
+    });
+  }
+
+  function selectDimension(group) {
+    if (!group) return;
+    selectedDimension = group.dataset.spectrum;
+    nav.querySelectorAll(".dimension-trigger").forEach((button) => {
+      const selected = button.closest(".mega-group") === group;
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    setSpectrum(selectedDimension);
   }
 
   function closeMenus() {
@@ -360,6 +409,12 @@ const navigation = (() => {
       closeMenus();
       toast("Signed out");
       route();
+      return;
+    }
+
+    const dimensionTrigger = event.target.closest(".dimension-trigger");
+    if (dimensionTrigger) {
+      selectDimension(dimensionTrigger.closest(".mega-group"));
       return;
     }
 
@@ -392,6 +447,11 @@ const navigation = (() => {
 
   nav.addEventListener("pointerover", (event) => {
     if (window.matchMedia("(max-width: 1280px)").matches) return;
+    const group = event.target.closest(".mega-group[data-spectrum]");
+    if (group && nav.contains(group)) {
+      setSpectrum(group.dataset.spectrum);
+      return;
+    }
     const section = event.target.closest("[data-nav-section]");
     if (section && nav.contains(section) && !section.classList.contains("is-open")) {
       setOpen(section, true);
@@ -401,9 +461,27 @@ const navigation = (() => {
 
   nav.addEventListener("pointerout", (event) => {
     if (window.matchMedia("(max-width: 1280px)").matches) return;
+    const group = event.target.closest(".mega-group[data-spectrum]");
+    if (group && !group.contains(event.relatedTarget)) {
+      const openSection = nav.querySelector("[data-nav-section].is-open");
+      setSpectrum(selectedDimension || openSection?.dataset.spectrum || spectrumForRoute());
+    }
     const section = event.target.closest("[data-nav-section]");
     if (section && section.dataset.openedBy === "hover" && !section.contains(event.relatedTarget) && !section.contains(document.activeElement)) {
       setOpen(section, false);
+    }
+  });
+
+  nav.addEventListener("focusin", (event) => {
+    const group = event.target.closest(".mega-group[data-spectrum]");
+    if (group) setSpectrum(group.dataset.spectrum);
+  });
+
+  nav.addEventListener("focusout", (event) => {
+    const group = event.target.closest(".mega-group[data-spectrum]");
+    if (group && !group.contains(event.relatedTarget)) {
+      const openSection = nav.querySelector("[data-nav-section].is-open");
+      setSpectrum(selectedDimension || openSection?.dataset.spectrum || spectrumForRoute());
     }
   });
 
