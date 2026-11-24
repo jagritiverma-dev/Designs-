@@ -1,6 +1,13 @@
 const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
 const homeHeroMarkup = app.querySelector(".living-canvas").outerHTML;
+const canvasPointerQuery = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 721px)");
+const canvasTabletQuery = window.matchMedia("(max-width: 1100px)");
+const canvasReducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+let pointerCanvasAction = null;
+let focusedCanvasAction = null;
+let pendingCanvasPointer = null;
+let canvasPointerFrame = null;
 
 function toast(message) {
   toastEl.textContent = message;
@@ -220,6 +227,170 @@ function accountView(user) {
     </section>`;
 }
 
+function syncHeroMotion() {
+  const hero = app.querySelector(".living-canvas");
+  if (!hero) return;
+  hero.classList.toggle("motion-paused", document.hidden);
+  if (document.hidden) {
+    pointerCanvasAction = null;
+    resetCanvasInteraction(hero);
+  }
+  syncCanvasAction(hero);
+}
+
+function canvasTarget(target, selector) {
+  return target instanceof Element ? target.closest(selector) : null;
+}
+
+function canvasPointerEnabled() {
+  return canvasPointerQuery.matches && !canvasReducedMotionQuery.matches && !document.hidden;
+}
+
+function resetCanvasInteraction(hero) {
+  if (!hero) return;
+  if (canvasPointerFrame !== null) {
+    cancelAnimationFrame(canvasPointerFrame);
+    canvasPointerFrame = null;
+    pendingCanvasPointer = null;
+  }
+  [
+    "--canvas-tilt-x",
+    "--canvas-tilt-y",
+    "--canvas-ribbon-one-x",
+    "--canvas-ribbon-one-y",
+    "--canvas-ribbon-two-x",
+    "--canvas-ribbon-two-y",
+  ].forEach((property) => hero.style.removeProperty(property));
+  hero.querySelectorAll(".canvas-float").forEach((item) => {
+    item.style.removeProperty("--canvas-float-scale");
+    item.style.removeProperty("--canvas-float-light");
+  });
+}
+
+function syncCanvasAction(hero) {
+  if (!hero || !hero.isConnected) return;
+  const action = [pointerCanvasAction, focusedCanvasAction].find(
+    (item) => item && item.isConnected && item.closest(".living-canvas") === hero
+  );
+  if (action) hero.dataset.activeAction = action.dataset.canvasAction;
+  else hero.removeAttribute("data-active-action");
+}
+
+function applyCanvasPointer(hero, clientX, clientY) {
+  if (!hero.isConnected || !canvasPointerEnabled()) return;
+  const bounds = hero.getBoundingClientRect();
+  if (!bounds.width || !bounds.height) return;
+
+  const pointerX = Math.max(-1, Math.min(1, ((clientX - bounds.left) / bounds.width) * 2 - 1));
+  const pointerY = Math.max(-1, Math.min(1, ((clientY - bounds.top) / bounds.height) * 2 - 1));
+  const strength = window.innerWidth <= 1100 ? 0.55 : 1;
+  const radius = window.innerWidth <= 1100 ? 120 : 165;
+  const nearbyFloats = [...hero.querySelectorAll(".canvas-float")].map((item) => {
+    const itemBounds = item.getBoundingClientRect();
+    const distance = Math.hypot(
+      clientX - (itemBounds.left + itemBounds.width / 2),
+      clientY - (itemBounds.top + itemBounds.height / 2)
+    );
+    const proximity = Math.max(0, Math.min(1, 1 - distance / radius));
+    return { item, proximity: proximity * proximity * (3 - 2 * proximity) };
+  });
+
+  hero.style.setProperty("--canvas-tilt-x", `${(-pointerY * 4.2 * strength).toFixed(2)}deg`);
+  hero.style.setProperty("--canvas-tilt-y", `${(pointerX * 4.2 * strength).toFixed(2)}deg`);
+  hero.style.setProperty("--canvas-ribbon-one-x", `${(pointerX * 7 * strength).toFixed(2)}px`);
+  hero.style.setProperty("--canvas-ribbon-one-y", `${(pointerY * 4 * strength).toFixed(2)}px`);
+  hero.style.setProperty("--canvas-ribbon-two-x", `${(pointerX * -3.2 * strength).toFixed(2)}px`);
+  hero.style.setProperty("--canvas-ribbon-two-y", `${(pointerY * -2.4 * strength).toFixed(2)}px`);
+
+  nearbyFloats.forEach(({ item, proximity }) => {
+    if (proximity < 0.01) {
+      item.style.removeProperty("--canvas-float-scale");
+      item.style.removeProperty("--canvas-float-light");
+      return;
+    }
+    item.style.setProperty("--canvas-float-scale", (1 + proximity * 0.025 * strength).toFixed(3));
+    item.style.setProperty("--canvas-float-light", (1 + proximity * 0.1 * strength).toFixed(3));
+  });
+}
+
+function queueCanvasPointer(hero, clientX, clientY) {
+  pendingCanvasPointer = { hero, clientX, clientY };
+  if (canvasPointerFrame !== null) return;
+  canvasPointerFrame = requestAnimationFrame(() => {
+    canvasPointerFrame = null;
+    const pending = pendingCanvasPointer;
+    pendingCanvasPointer = null;
+    if (pending) applyCanvasPointer(pending.hero, pending.clientX, pending.clientY);
+  });
+}
+
+function initCanvasInteractions() {
+  app.addEventListener("pointermove", (event) => {
+    if (!canvasPointerEnabled() || event.pointerType === "touch") return;
+    const hero = canvasTarget(event.target, ".living-canvas");
+    if (!hero) return;
+    const action = canvasTarget(event.target, ".canvas-action");
+    if (action && action !== pointerCanvasAction) {
+      pointerCanvasAction = action;
+      syncCanvasAction(hero);
+    }
+    queueCanvasPointer(hero, event.clientX, event.clientY);
+  });
+
+  app.addEventListener("pointerover", (event) => {
+    if (!canvasPointerQuery.matches || event.pointerType === "touch") return;
+    const action = canvasTarget(event.target, ".canvas-action");
+    if (!action) return;
+    pointerCanvasAction = action;
+    syncCanvasAction(action.closest(".living-canvas"));
+  });
+
+  app.addEventListener("pointerout", (event) => {
+    if (event.pointerType === "touch") return;
+    const hero = canvasTarget(event.target, ".living-canvas");
+    if (!hero) return;
+    const related = event.relatedTarget instanceof Node ? event.relatedTarget : null;
+    const action = canvasTarget(event.target, ".canvas-action");
+    if (action && action === pointerCanvasAction && (!related || !action.contains(related))) {
+      pointerCanvasAction = null;
+      syncCanvasAction(hero);
+    }
+    if (!related || !hero.contains(related)) {
+      pointerCanvasAction = null;
+      resetCanvasInteraction(hero);
+      syncCanvasAction(hero);
+    }
+  });
+
+  app.addEventListener("focusin", (event) => {
+    const action = canvasTarget(event.target, ".canvas-action");
+    if (!action || !action.matches(":focus-visible")) return;
+    focusedCanvasAction = action;
+    syncCanvasAction(action.closest(".living-canvas"));
+  });
+
+  app.addEventListener("focusout", (event) => {
+    const action = canvasTarget(event.target, ".canvas-action");
+    if (!action || action !== focusedCanvasAction) return;
+    const related = event.relatedTarget instanceof Node ? event.relatedTarget : null;
+    if (related && action.contains(related)) return;
+    focusedCanvasAction = null;
+    syncCanvasAction(action.closest(".living-canvas"));
+  });
+
+  const syncPointerCapability = () => {
+    const hero = app.querySelector(".living-canvas");
+    if (!hero) return;
+    if (!canvasPointerQuery.matches) pointerCanvasAction = null;
+    resetCanvasInteraction(hero);
+    syncCanvasAction(hero);
+  };
+  [canvasPointerQuery, canvasTabletQuery, canvasReducedMotionQuery].forEach((query) => {
+    if (query.addEventListener) query.addEventListener("change", syncPointerCapability);
+    else query.addListener(syncPointerCapability);
+  });
+}
+
 async function route() {
   const { parts, query } = parseHash();
   const user = Api.me();
@@ -229,6 +400,7 @@ async function route() {
 
   if (!parts.length) {
     app.innerHTML = homeView();
+    syncHeroMotion();
     const { items } = await Api.getDesigns();
     const el = document.getElementById("statDesigns");
     if (el) el.textContent = String(items.length);
@@ -333,7 +505,9 @@ window.addEventListener("hashchange", route);
 (function particles() {
   const canvas = document.getElementById("particles");
   const ctx = canvas.getContext("2d");
+  const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   let dots = [];
+  let frameId = null;
   function rgb() {
     return getComputedStyle(document.documentElement).getPropertyValue("--particle").trim() || "210, 220, 235";
   }
@@ -349,6 +523,8 @@ window.addEventListener("hashchange", route);
     }));
   }
   function draw() {
+    frameId = null;
+    if (document.hidden || motionQuery.matches) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const color = rgb();
     dots.forEach((p) => {
@@ -359,12 +535,26 @@ window.addEventListener("hashchange", route);
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fill();
     });
-    requestAnimationFrame(draw);
+    frameId = requestAnimationFrame(draw);
+  }
+  function syncMotion() {
+    if (document.hidden || motionQuery.matches) {
+      if (frameId !== null) cancelAnimationFrame(frameId);
+      frameId = null;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    } else if (frameId === null) {
+      frameId = requestAnimationFrame(draw);
+    }
   }
   size();
-  draw();
+  syncMotion();
   window.addEventListener("resize", size);
+  document.addEventListener("visibilitychange", syncMotion);
+  if (motionQuery.addEventListener) motionQuery.addEventListener("change", syncMotion);
+  else motionQuery.addListener(syncMotion);
 })();
 
+initCanvasInteractions();
+document.addEventListener("visibilitychange", syncHeroMotion);
 if (!location.hash) location.hash = "#/";
 route();
