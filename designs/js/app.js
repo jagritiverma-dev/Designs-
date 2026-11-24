@@ -1,8 +1,5 @@
 const app = document.getElementById("app");
-const navAuth = document.getElementById("navAuth");
 const toastEl = document.getElementById("toast");
-const navToggle = document.getElementById("navToggle");
-const mainNav = document.getElementById("mainNav");
 
 function toast(message) {
   toastEl.textContent = message;
@@ -31,31 +28,6 @@ function escapeHtml(str) {
 
 function srcdoc(html, css, js) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head><body>${html}<script>${js || ""}<\/script></body></html>`;
-}
-
-function renderNavAuth() {
-  const user = Api.me();
-  if (user) {
-    navAuth.innerHTML = `<a href="#/account">${escapeHtml(user.name)}</a><button type="button" class="text-btn" id="logoutBtn">Log out</button>`;
-    document.getElementById("logoutBtn").onclick = () => {
-      Api.logout();
-      toast("Signed out");
-      renderNavAuth();
-      route();
-    };
-  } else {
-    navAuth.innerHTML = `<a class="btn-sm" href="#/login">Log in</a><a class="btn-sm ghost" href="#/register">Sign up</a>`;
-  }
-  document.querySelectorAll("[data-nav]").forEach((a) => {
-    const { parts } = parseHash();
-    const key = parts[0] || "home";
-    a.classList.toggle(
-      "active",
-      a.dataset.nav === key ||
-        ((key === "designs" || key === "types") && (a.dataset.nav === "types" || a.dataset.nav === "designs"))
-    );
-    if (!parts[0]) a.classList.toggle("active", a.dataset.nav === "home");
-  });
 }
 
 function homeView() {
@@ -270,8 +242,8 @@ function accountView(user) {
 async function route() {
   const { parts, query } = parseHash();
   const user = Api.me();
-  renderNavAuth();
-  mainNav.classList.remove("open");
+  navigation.close();
+  navigation.sync();
   app.classList.add("fade");
 
   if (!parts.length) {
@@ -328,7 +300,7 @@ async function route() {
         return;
       }
       toast(parts[0] === "login" ? "Logged in" : "Account created");
-      renderNavAuth();
+      navigation.sync();
       location.hash = "#/designs";
     });
   } else if (parts[0] === "account") {
@@ -368,13 +340,13 @@ function applyTheme(theme) {
   localStorage.setItem("formlab_theme", theme);
   document.getElementById("modeLight").classList.toggle("on", theme === "light");
   document.getElementById("modeDark").classList.toggle("on", theme === "dark");
+  navigation.sync();
 }
 
 document.getElementById("modeLight").addEventListener("click", () => applyTheme("light"));
 document.getElementById("modeDark").addEventListener("click", () => applyTheme("dark"));
 applyTheme(document.documentElement.getAttribute("data-theme") || "dark");
 
-navToggle.addEventListener("click", () => mainNav.classList.toggle("open"));
 window.addEventListener("hashchange", route);
 
 (function particles() {

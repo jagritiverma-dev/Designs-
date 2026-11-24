@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FormLab — Website design library</title>
+  <title>Creative Universe — Creative inspiration</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
@@ -24,34 +24,17 @@
   </div>
 
   <header class="topbar">
-    <a class="logo" href="#/">FormLab</a>
-    <button class="nav-toggle" id="navToggle" aria-label="Open menu" type="button">
+    <a class="logo" href="#/" aria-label="Creative Universe home">
+      <span class="logo-mark" aria-hidden="true">C</span>
+      <span class="logo-copy">
+        <span>Creative <span class="logo-light">Universe</span></span>
+        <small>Independent creative index</small>
+      </span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Open navigation" aria-controls="mainNav" aria-expanded="false" type="button">
       <span></span><span></span><span></span>
     </button>
-    <nav class="nav" id="mainNav">
-      <a href="#/" data-nav="home">Home</a>
-      <div class="nav-drop">
-        <a href="#/types" data-nav="types">Designs</a>
-        <div class="nav-drop-menu">
-          <a href="#/types">All types</a>
-          <a href="#/designs?mood=formal">Formal</a>
-          <a href="#/designs?mood=informal">Informal</a>
-          <a href="#/designs?mood=branding">Branding</a>
-          <a href="#/designs?motion=2d">2D</a>
-          <a href="#/designs?motion=3d">3D</a>
-          <a href="#/designs?motion=animated">Animated</a>
-          <a href="#/designs?motion=unique">Unique</a>
-          <a href="#/designs?level=simple">Simple (free code)</a>
-          <a href="#/designs">All designs</a>
-        </div>
-      </div>
-      <a href="#/methods" data-nav="methods">Methods</a>
-      <div class="mode-switch" role="group" aria-label="Color mode">
-        <button type="button" id="modeLight" data-theme-set="light">Light</button>
-        <button type="button" id="modeDark" data-theme-set="dark">Dark</button>
-      </div>
-      <span class="nav-auth" id="navAuth"></span>
-    </nav>
+    <nav class="nav" id="mainNav" aria-label="Main navigation"></nav>
   </header>
 
   <main id="app" class="app"></main>
@@ -61,7 +44,19 @@
   </footer>
 
   <div class="toast" id="toast" hidden></div>
+  <dialog class="search-dialog" id="navSearchDialog" aria-labelledby="navSearchTitle">
+    <form class="search-dialog-form" id="navSearchForm">
+      <label id="navSearchTitle" for="navSearchInput">Search Creative Universe</label>
+      <div class="search-field">
+        <input id="navSearchInput" type="search" placeholder="Search designs…" autocomplete="off" />
+        <button class="search-submit" type="submit">Search</button>
+      </div>
+      <p>Search currently covers designs available in this library.</p>
+      <button class="search-close" id="navSearchClose" type="button">Close</button>
+    </form>
+  </dialog>
 
+  <script src="js/navigation.js"></script>
   <script src="js/designs-data.js"></script>
   <script src="js/api.js"></script>
   <script src="js/app.js"></script>
